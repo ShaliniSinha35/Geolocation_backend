@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cors= require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 
 app.use(cors())
@@ -14,41 +15,77 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
-const connection = mysql.createConnection({
+const connection = mysql.createPool({
   host: "43.225.55.114",
   user: "maniasuj_geolocation",
   password: "^mLM.IU}eEH~",
   database:"maniasuj_geolocation",
+
+
+  // host: "localhost",
+  // user: "root",
+  // password: "",
+  // database:"geolocation",
 });
 
-// 43.225.55.114
-// $username = "maniasuj_geolocation";
-// $password = "^mLM.IU}eEH~";
-// $dbname = "maniasuj_geolocation";
 
-connection.connect((err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("connected");
-  }
-});
 
+
+
+function handleDisconnect() {
+  connection.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting MySQL connection:', err);
+      setTimeout(handleDisconnect, 2000);
+    } else {
+      console.log('Connected to MySQL');
+    
+      connection.release();
+    }
+  });
+
+}
+
+handleDisconnect();
+
+// Multer configuration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images'); // Store uploaded images in the 'images' directory
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Specify the directory where uploaded files should be stored
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext); // Unique filename to prevent conflicts
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // Use the original file name for storing the file
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Route to handle file upload
+app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No files were uploaded.');
   }
+
+  // File was uploaded successfully
+  return res.status(200).send('File uploaded successfully.');
 });
 
 
-// Create Multer instance with specified storage options
-const upload = multer({ storage: storage });
-app.use('/images',express.static('images'))
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'images'); // Store uploaded images in the 'images' directory
+//   },
+//   filename: (req, file, cb) => {
+//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+//     const ext = path.extname(file.originalname);
+//     cb(null, uniqueSuffix + ext); // Unique filename to prevent conflicts
+//   }
+// });
+
+
+// // Create Multer instance with specified storage options
+// const upload = multer({ storage: storage });
+app.use('/upload',express.static('upload'))
 
 app.get("/district",(req,res)=>{
 
@@ -246,7 +283,8 @@ console.log("imageArray",imageArray)
     });
 
       console.log('Project data inserted and pid updated successfully!');
-      res.status(200).send('Project data inserted and pid updated successfully');
+      res.status(200).send(pid);
+      // res.json({ message: "insertion successful", pid:pid });
     });
   });
 });
