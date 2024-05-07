@@ -14,18 +14,19 @@ app.use(cors())
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
+app.use('/upload/app/', express.static("upload/app/"));
 
 const connection = mysql.createPool({
-  host: "43.225.55.114",
-  user: "maniasuj_geolocation",
-  password: "^mLM.IU}eEH~",
-  database:"maniasuj_geolocation",
+  // host: "43.225.55.114",
+  // user: "maniasuj_geolocation",
+  // password: "^mLM.IU}eEH~",
+  // database:"maniasuj_geolocation"
 
 
-  // host: "localhost",
-  // user: "root",
-  // password: "",
-  // database:"geolocation",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database:"geolocation"
 });
 
 
@@ -51,7 +52,7 @@ handleDisconnect();
 // Multer configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Specify the directory where uploaded files should be stored
+    cb(null, 'upload/app/'); // Specify the directory where uploaded files should be stored
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname); // Use the original file name for storing the file
@@ -66,26 +67,16 @@ app.post('/upload', upload.single('image'), (req, res) => {
     return res.status(400).send('No files were uploaded.');
   }
 
+
+  const imageUrl = `${req.protocol}://${req.get('host')}/upload/app/${req.file.filename}`;
+  console.log(imageUrl)
+
+
   // File was uploaded successfully
   return res.status(200).send('File uploaded successfully.');
 });
 
 
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'images'); // Store uploaded images in the 'images' directory
-//   },
-//   filename: (req, file, cb) => {
-//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-//     const ext = path.extname(file.originalname);
-//     cb(null, uniqueSuffix + ext); // Unique filename to prevent conflicts
-//   }
-// });
-
-
-// // Create Multer instance with specified storage options
-// const upload = multer({ storage: storage });
-app.use('/upload',express.static('upload'))
 
 app.get("/district",(req,res)=>{
 
@@ -211,7 +202,7 @@ app.get("/activityName",(req,res)=>{
 app.get("/verify", (req, res) => {
   const empId = req.query.empId; // Corrected variable name
   const password = req.query.password; // Corrected variable name
-  console.log("Employee ID:", empId, password);
+  // console.log("Employee ID:", empId, password);
 
 
   
@@ -222,24 +213,26 @@ app.get("/verify", (req, res) => {
       console.log("Error executing query:", err);
       return res.status(500).send("Error executing query");
     } else {
-      console.log("Query result:", result);
+      // console.log("Query result:", result);
       return res.send(result);
     }
   });
 });
 
 app.post("/addProject", (req, res) => {
-  const { emp_id, dist, block, panchayat, village, projectArea, activityType, activityName, imageArray,desc } = req.body;
+  const { emp_id, dist, block, panchayat, village, projectArea, activityType, activityName, imageArray,desc,workid,length,breadth,height } = req.body;
 
+
+  console.log("226",req.body)
 console.log("imageArray",imageArray)
 
      
 
   const sqlInsertProject = `INSERT INTO project_detail 
-                            (emp_id, dist, block, panchayat, village, project_area, activity_type, activity_name) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                            (emp_id, dist, block, panchayat, village, project_area, activity_type, activity_name,workid,length,breadth,height) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)`;
 
-  connection.query(sqlInsertProject, [emp_id, dist, block, panchayat, village, projectArea, activityType, activityName], (err, result) => {
+  connection.query(sqlInsertProject, [emp_id, dist, block, panchayat, village, projectArea, activityType, activityName,workid,length,breadth,height], (err, result) => {
     if (err) {
       console.error('Error inserting project data:', err);
       res.status(500).send('Error inserting project data into database');
@@ -268,11 +261,13 @@ console.log("imageArray",imageArray)
       const { uri, latitude, longitude, dateTime } = image;
 
 
+       const imgUri= `Img${workid}.jpg`
+
       const sqlInsertImage = `INSERT INTO image_detail 
                               (emp_id, pid, url, lat, longitude, description, date_time) 
                               VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-      await connection.query(sqlInsertImage, [emp_id, pid, uri, latitude, longitude, desc, dateTime],(imageErr,imageResult)=>{
+      await connection.query(sqlInsertImage, [emp_id, pid, imgUri, latitude, longitude, desc, dateTime],(imageErr,imageResult)=>{
          if(imageErr){
           console.error('Error updating image pid:', imageErr);
           res.status(500).send('Error updating image data in database');
@@ -288,6 +283,223 @@ console.log("imageArray",imageArray)
     });
   });
 });
+
+
+app.get("/projectAssign", (req, res) => {
+  const empId = req.query.empId; 
+  console.log("289 Employee ID:", empId);
+
+
+  
+
+  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ?';
+  connection.query(sql, [empId], function (err, result) {
+    if (err) {
+      console.log("Error executing query:", err);
+      return res.status(500).send("Error executing query");
+    } else {
+      console.log("Query result:", result);
+      return res.send(result);
+    }
+  });
+});
+
+
+app.get("/projectDetails", (req, res) => {
+  const empId = req.query.empId;
+
+  console.log("Employee ID:", empId);
+
+  const sql = `
+    SELECT pd.id AS project_id,
+           pd.emp_id,
+           pd.dist,
+           pd.block,
+           pd.panchayat,
+           pd.village,
+           pd.project_area,
+           pd.activity_type,
+           pd.activity_name,
+           id.url AS image_url,
+           id.lat AS image_lat,
+           id.longitude AS image_longitude,
+           id.description AS image_description,
+           id.date_time AS image_date_time
+    FROM project_detail pd
+    INNER JOIN image_detail id ON pd.pid = id.pid
+    WHERE pd.emp_id = ?
+  `;
+
+
+  
+  connection.query(sql, [empId], (err, result) => {
+    if (err) {
+      console.log("Error executing query:", err);
+      return res.status(500).send("Error executing query");
+    } else {
+      console.log("Query result:", result);
+      return res.send(result);
+    }
+  });
+});
+
+
+app.get("/districtAssign",(req,res)=>{
+  const did = req.query.did;
+
+  console.log(did)
+
+  const sql = 'SELECT id, name FROM `master_district` WHERE did = ? ';
+  connection.query(sql, [did], function (err, result) {
+
+        if (err) {
+          console.log(err);
+        } else {
+
+         
+          res.json(result);
+        }
+      }
+    );
+})
+
+
+
+
+app.get("/work",(req,res)=>{
+  const activityId = req.query.activityId;
+
+console.log(activityId)
+  const sql = 'SELECT * FROM `master_workid` WHERE activity_type = ? ';
+  connection.query(sql, [activityId], function (err, result) {
+
+        if (err) {
+          console.log(err);
+        } else {
+
+         
+          res.json(result);
+        }
+      }
+    );
+})
+
+
+
+app.get("/workDetails", (req, res) => {
+  const { workId } = req.query; // Extract activityId from query parameters
+  
+  const query = `
+    SELECT 
+        mw.id, 
+        mw.work_id, 
+        mw.workid, 
+        mw.farmer_name, 
+        mw.father_name, 
+        mw.project, 
+        mw.village_id,
+        mw.district_id,
+        mw.block_id,
+        mw.panchayat_id,
+        mpa.name AS project_name,
+        ma.name AS activity_name, 
+        mw.activity_type, 
+        mw.activity, 
+        mv.name AS village_name, 
+        ms.name AS state_name, 
+        md.name AS district_name, 
+        mb.name AS block_name, 
+        mp.name AS panchayat_name, 
+        mw.name, 
+        mw.cdate, 
+        mw.cby, 
+        mw.status 
+    FROM 
+        master_workid AS mw 
+    LEFT JOIN 
+        master_activity AS ma ON mw.activity = ma.atid 
+    LEFT JOIN 
+        master_village AS mv ON mw.village_id = mv.village_id 
+    LEFT JOIN 
+        master_state AS ms ON mw.sid = ms.sid 
+    LEFT JOIN 
+        master_district AS md ON mw.district_id = md.did 
+    LEFT JOIN 
+        master_block AS mb ON mw.block_id = mb.block_id 
+    LEFT JOIN 
+        master_panchayat AS mp ON mw.panchayat_id = mp.panchayat_id 
+    JOIN 
+        master_project_area AS mpa ON mw.project = mpa.project_id
+    WHERE 
+        mw.workid = ?; 
+  `;
+  
+  connection.query(query, [workId], (error, results) => {
+    if (error) {
+      console.error("Error executing query:", error);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+
+
+app.get("/completeProjects",(req,res)=>{
+  const empId = req.query.empId;
+
+
+
+  const query = `
+  SELECT 
+      pd.emp_id, 
+      mpa.name AS project_name,
+      ma.name AS activity_names, 
+      mv.name AS village_name, 
+      md.name AS district_name, 
+      mb.name AS block_name, 
+      mp.name AS panchayat_name,
+      mat.name AS activity_type_name,
+      id.url AS image_url,
+      id.lat AS image_lat,
+      id.longitude AS image_longitude,
+      id.description AS image_description,
+      id.date_time AS image_date_time
+  FROM project_detail AS pd 
+  LEFT JOIN master_activity AS ma ON pd.activity_name = ma.atid 
+  LEFT JOIN master_activity_type AS mat ON pd.activity_type = mat.atypeid
+  LEFT JOIN master_village AS mv ON pd.village = mv.village_id 
+  LEFT JOIN master_district AS md ON pd.dist = md.did 
+  LEFT JOIN master_block AS mb ON pd.block = mb.block_id 
+  LEFT JOIN master_panchayat AS mp ON pd.panchayat = mp.panchayat_id 
+  JOIN master_project_area AS mpa ON pd.project_area = mpa.project_id
+ INNER JOIN image_detail AS id ON pd.pid = id.pid
+    WHERE pd.emp_id = ?
+`;
+
+connection.query(query, [empId], (error, results) => {
+  if (error) {
+    console.error("Error executing query:", error);
+    res.status(500).json({ error: "Internal server error" });
+    return;
+  }
+  res.json(results);
+});
+
+
+})
+
+
+
+
+
+
+
+
+
+
 
 
 
