@@ -521,7 +521,6 @@ connection.query(query, [empId], (error, results) => {
 
 
 
-
 app.post("/updateStatus", (req, res) => {
   const projectId = req.query.projectAssignId; // Accessing query parameter
 
