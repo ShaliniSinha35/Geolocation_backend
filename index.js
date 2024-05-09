@@ -17,16 +17,16 @@ app.use(express.static("public"));
 app.use('/upload/app/', express.static("upload/app/"));
 
 const connection = mysql.createPool({
-  // host: "43.225.55.114",
-  // user: "maniasuj_geolocation",
-  // password: "^mLM.IU}eEH~",
-  // database:"maniasuj_geolocation"
+  host: "43.225.55.114",
+  user: "maniasuj_geolocation",
+  password: "^mLM.IU}eEH~",
+  database:"maniasuj_geolocation"
 
 
-  host: "localhost",
-  user: "root",
-  password: "",
-  database:"geolocation"
+  // host: "localhost",
+  // user: "root",
+  // password: "",
+  // database:"geolocation"
 });
 
 
