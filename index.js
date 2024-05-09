@@ -149,18 +149,21 @@ app.get("/village",(req,res)=>{
 
 app.get("/projectArea",(req,res)=>{
 
-    connection.query(
-        "SELECT * FROM `master_project_area` WHERE STATUS = 'Active'",
-        (error, results) => {
-          if (error) {
-            console.log(error);
-          } else {
+  const project_id = req.query.project_id
 
-  
-            res.json(results);
-          }
-        }
-      );
+  const sql = "SELECT  `project_id`, `name` FROM `master_project_area` WHERE project_id = ?";
+
+  connection.query(sql, [project_id], function (err, result) {
+    if (err) {
+      console.log("Error executing query:", err);
+      return res.status(500).send("Error executing query");
+    } else {
+      // console.log("Query result:", result);
+      return res.send(result);
+    }
+  });
+
+   
 })
 
 
@@ -278,9 +281,29 @@ console.log("imageArray",imageArray)
     });
 
       console.log('Project data inserted and pid updated successfully!');
-      res.status(200).send(pid);
+      res.status(200).send(workid);
       // res.json({ message: "insertion successful", pid:pid });
     });
+  });
+});
+
+
+app.get("/allProjects", (req, res) => {
+  const empId = req.query.empId; 
+  console.log("289 Employee ID:", empId);
+
+
+  
+
+  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ? && status = "Completed" ';
+  connection.query(sql, [empId], function (err, result) {
+    if (err) {
+      console.log("Error executing query:", err);
+      return res.status(500).send("Error executing query");
+    } else {
+      console.log("Query result:", result);
+      return res.send(result);
+    }
   });
 });
 
@@ -292,7 +315,7 @@ app.get("/projectAssign", (req, res) => {
 
   
 
-  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ?';
+  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ? && status = "Active" ';
   connection.query(sql, [empId], function (err, result) {
     if (err) {
       console.log("Error executing query:", err);
@@ -303,6 +326,8 @@ app.get("/projectAssign", (req, res) => {
     }
   });
 });
+
+
 
 
 app.get("/projectDetails", (req, res) => {
@@ -349,7 +374,7 @@ app.get("/districtAssign",(req,res)=>{
 
   console.log(did)
 
-  const sql = 'SELECT id, name FROM `master_district` WHERE did = ? ';
+  const sql = 'SELECT did, name FROM `master_district` WHERE did = ? ';
   connection.query(sql, [did], function (err, result) {
 
         if (err) {
@@ -368,10 +393,13 @@ app.get("/districtAssign",(req,res)=>{
 
 app.get("/work",(req,res)=>{
   const activityId = req.query.activityId;
+  const projectId = req.query.projectId;
+  const districtId = req.query.districtId;
+  console.log(projectId,districtId)
 
 console.log(activityId)
-  const sql = 'SELECT * FROM `master_workid` WHERE activity_type = ? ';
-  connection.query(sql, [activityId], function (err, result) {
+  const sql = 'SELECT  `workid` FROM `master_workid` WHERE activity = ? && project = ? && district_id = ? ';
+  connection.query(sql, [activityId,projectId,districtId], function (err, result) {
 
         if (err) {
           console.log(err);
@@ -417,7 +445,7 @@ app.get("/workDetails", (req, res) => {
     FROM 
         master_workid AS mw 
     LEFT JOIN 
-        master_activity AS ma ON mw.activity = ma.atid 
+        master_activity_type AS ma ON mw.activity_type = ma.atypeid 
     LEFT JOIN 
         master_village AS mv ON mw.village_id = mv.village_id 
     LEFT JOIN 
@@ -468,8 +496,8 @@ app.get("/completeProjects",(req,res)=>{
       id.description AS image_description,
       id.date_time AS image_date_time
   FROM project_detail AS pd 
-  LEFT JOIN master_activity AS ma ON pd.activity_name = ma.atid 
-  LEFT JOIN master_activity_type AS mat ON pd.activity_type = mat.atypeid
+  LEFT JOIN master_activity AS ma ON pd.activity_type = ma.atid 
+  LEFT JOIN master_activity_type AS mat ON pd.activity_name = mat.atypeid
   LEFT JOIN master_village AS mv ON pd.village = mv.village_id 
   LEFT JOIN master_district AS md ON pd.dist = md.did 
   LEFT JOIN master_block AS mb ON pd.block = mb.block_id 
@@ -494,9 +522,21 @@ connection.query(query, [empId], (error, results) => {
 
 
 
+app.post("/updateStatus", (req, res) => {
+  const projectId = req.query.projectAssignId; // Accessing query parameter
 
+  const query = "UPDATE `project_assign` SET `status`='completed' WHERE project_assign_id= ?";
 
-
+  connection.query(query, [projectId], (error, results) => {
+    if (error) {
+      console.error("Error executing query:", error);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    res.json({ message: "success" });
+    console.log("updated status")
+  });
+});
 
 
 
