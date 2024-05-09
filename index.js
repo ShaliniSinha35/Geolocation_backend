@@ -525,7 +525,7 @@ connection.query(query, [empId], (error, results) => {
 app.post("/updateStatus", (req, res) => {
   const projectId = req.query.projectAssignId; // Accessing query parameter
 
-  const query = "UPDATE `project_assign` SET `status`='completed' WHERE project_assign_id= ?";
+  const query = "UPDATE `project_assign` SET `status`='Active' WHERE project_assign_id= ?";
 
   connection.query(query, [projectId], (error, results) => {
     if (error) {
