@@ -487,6 +487,7 @@ app.get("/completeProjects",(req,res)=>{
       mb.name AS block_name, 
       mp.name AS panchayat_name,
       mat.name AS activity_type_name,
+      emp.name AS employee_name,
       id.url AS image_url,
       id.lat AS image_lat,
       id.longitude AS image_longitude,
@@ -499,6 +500,7 @@ app.get("/completeProjects",(req,res)=>{
   LEFT JOIN master_district AS md ON pd.dist = md.did 
   LEFT JOIN master_block AS mb ON pd.block = mb.block_id 
   LEFT JOIN master_panchayat AS mp ON pd.panchayat = mp.panchayat_id 
+    LEFT JOIN employee AS emp ON pd.emp_id = emp.emp_id
   JOIN master_project_area AS mpa ON pd.project_area = mpa.project_id
  INNER JOIN image_detail AS id ON pd.pid = id.pid
     WHERE pd.emp_id = ?
