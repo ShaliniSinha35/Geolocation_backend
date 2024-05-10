@@ -290,7 +290,7 @@ app.get("/allProjects", (req, res) => {
 
   
 
-  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ? && status = "Completed" ';
+  const sql = 'SELECT * FROM `project_assign` WHERE emp_id = ?';
   connection.query(sql, [empId], function (err, result) {
     if (err) {
       console.log("Error executing query:", err);
