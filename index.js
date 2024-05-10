@@ -478,6 +478,8 @@ app.get("/completeProjects",(req,res)=>{
   const query = `
   SELECT 
       pd.emp_id, 
+      pd.farmer_name,
+      pd.entry_date,
       mpa.name AS project_name,
       ma.name AS activity_names, 
       mv.name AS village_name, 
