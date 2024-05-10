@@ -1,20 +1,18 @@
 const express = require("express");
 const mysql = require("mysql");
 const app = express();
-const port = process.env.port || 3000;
+const port = process.env.PORT || 3000; // Corrected the case of 'PORT'
 const bodyParser = require("body-parser");
-const cors= require('cors');
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
-
-app.use(cors())
-
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static("public"));
+app.use(express.static("public")); // Assuming you have a 'public' directory for static files
 app.use('/upload/app/', express.static("upload/app/"));
+
 
 const connection = mysql.createPool({
   host: "43.225.55.114",
@@ -49,13 +47,12 @@ function handleDisconnect() {
 
 handleDisconnect();
 
-// Multer configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'upload/app/'); // Specify the directory where uploaded files should be stored
+    cb(null, 'upload/app/');
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Use the original file name for storing the file
+    cb(null, file.originalname);
   },
 });
 
@@ -67,15 +64,12 @@ app.post('/upload', upload.single('image'), (req, res) => {
     return res.status(400).send('No files were uploaded.');
   }
 
-
   const imageUrl = `${req.protocol}://${req.get('host')}/upload/app/${req.file.filename}`;
-  console.log(imageUrl)
-
+  console.log(imageUrl);
 
   // File was uploaded successfully
-  return res.status(200).send('File uploaded successfully.');
+  return res.status(200).json({ imageUrl: imageUrl });
 });
-
 
 
 app.get("/district",(req,res)=>{
