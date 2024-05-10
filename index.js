@@ -217,7 +217,7 @@ app.get("/verify", (req, res) => {
 });
 
 app.post("/addProject", (req, res) => {
-  const { emp_id, dist, block, panchayat, village, projectArea, activityType, activityName, imageArray,desc,workid,length,breadth,height } = req.body;
+  const { emp_id, dist, block, panchayat, village,farmer_name, projectArea, activityType, activityName, imageArray,desc,workid,length,breadth,height } = req.body;
 
 
   console.log("226",req.body)
@@ -226,10 +226,10 @@ console.log("imageArray",imageArray)
      
 
   const sqlInsertProject = `INSERT INTO project_detail 
-                            (emp_id, dist, block, panchayat, village, project_area, activity_type, activity_name,workid,length,breadth,height) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)`;
+                            (emp_id, dist, block, panchayat, village, farmer_name, project_area, activity_type, activity_name,workid,length,breadth,height,entry_date,status) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?, DATE('now'),'Active')`;
 
-  connection.query(sqlInsertProject, [emp_id, dist, block, panchayat, village, projectArea, activityType, activityName,workid,length,breadth,height], (err, result) => {
+  connection.query(sqlInsertProject, [emp_id, dist, block, panchayat, village, farmer_name, projectArea, activityType, activityName,workid,length,breadth,height], (err, result) => {
     if (err) {
       console.error('Error inserting project data:', err);
       res.status(500).send('Error inserting project data into database');
