@@ -225,9 +225,10 @@ console.log("imageArray",imageArray)
 
      
 
+
   const sqlInsertProject = `INSERT INTO project_detail 
                             (emp_id, dist, block, panchayat, village, farmer_name, project_area, activity_type, activity_name,workid,length,breadth,height,entry_date,status) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?, DATE('now'),'Active')`;
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?, NOW(),'Active')`;
 
   connection.query(sqlInsertProject, [emp_id, dist, block, panchayat, village, farmer_name, projectArea, activityType, activityName,workid,length,breadth,height], (err, result) => {
     if (err) {
